@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css"
+          integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+    <link rel="stylesheet" href="asset/app.css">
+</head>
+<body>
+<div id="gitlabTimer" class="container">
+    <div v-show="showPreloader">
+        <div class="loader"></div>
+    </div>
+    <div class="auth" v-show="showAuthDialog">
+        <h1>Вы не авторизованы</h1>
+        <p>
+            Для продолжения работы Вам необходимо ввести private key в поле ниже.
+            Получить private key Вы можете на странице <a :href="getPrivateKeyUrl" target="_blank">User
+            Settings/Account</a>
+        </p>
+        <div class="form-inline">
+
+            <div class="form-group mx-sm-3">
+                <input type="password" class="form-control" v-model="config.privateKey" placeholder="Private key">
+            </div>
+            <button class="btn btn-primary" @click="checkPrivateKey">Сохранить</button>
+        </div>
+    </div>
+    <div v-show="showTimeTrackingNotice" class="alert alert-danger" role="alert">
+        <strong>Упс =(!</strong> К сожалению Ваша версия gitlab не потдерживает time tracking
+    </div>
+    <div v-show="showProjectList">
+        <h1>Выберите проект</h1>
+        <div class="list-group" v-for="project in projectList">
+            <a href="#" class="list-group-item list-group-item-action flex-column align-items-start"
+               @click="setProject(project.id)">
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">{{project.name}}</h5>
+                    <small>{{formatDate(project.last_activity_at)}}</small>
+                </div>
+            </a>
+        </div>
+    </div>
+    <div v-show="showIssueList">
+        <h1>Запустите таймер</h1>
+        <div class="list-group" v-for="issue in issueList">
+            <a href="#" class="list-group-item list-group-item-action flex-column align-items-start"
+               :class="isActiveIssue(issue.id) ? 'active': ''">
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">{{issue.title}}</h5>
+                    <small>Последнее изменение: {{formatDate(issue.updated_at)}}</small>
+
+
+                </div>
+                <p class="mb-1">{{issue.description}}</p>
+                <div class="row">
+                    <div class="col col-xs-4">
+
+                        <button class="btn btn-primary"
+                                @click="startTimer(issue.id)"
+                                :class="isActiveIssue(issue.id) ? 'hidden-xs-up' : ''">Запустить таймер
+                        </button>
+                        <button class="btn btn-default"
+                                @click="stopTimer(issue.id)"
+                                :class="!!currentIssue && isActiveIssue(issue.id) ? '' : 'hidden-xs-up'">Остановить
+                            таймер
+                        </button>
+                    </div>
+                    <div class="col col-xs-8 ">
+                        <div class="float-right">
+                        <small v-if="isActiveIssue(issue.id)">{{timerActiveString}}</small>
+                        <div class="loader small" v-show="showTimerPreloader"></div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- jQuery first, then Tether, then Bootstrap JS. -->
+<script src="https://code.jquery.com/jquery-3.1.1.min.js"
+        crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js"
+        integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb"
+        crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js"
+        integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn"
+        crossorigin="anonymous"></script>
+<script src="asset/vendor/vue.js"></script>
+<script src="asset/app.js"></script>
+</body>
+</html>
