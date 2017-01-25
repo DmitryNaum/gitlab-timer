@@ -55,6 +55,7 @@
                         gitlabTimer.checkGitlabVersion();
                     }).fail (function() {
                         gitlabTimer.showPreloader = false;
+                        gitlabTimer.showAuthDialog = true;
                     });
 
             },
