@@ -45,16 +45,17 @@
                 }
                 this.setPrivateKey();
                 this.showPreloader = true;
-                $.get(this.config.gitlabHost + '/api/v3/version', function (response) {
-                    if (response.version) {
-                        gitlabTimer.rememberPrivateKey();
-                        gitlabTimer.isAuthorized = true;
-                        gitlabTimer.showAuthDialog = false;
-                    }
-                    gitlabTimer.showPreloader = false;
-                    gitlabTimer.checkGitlabVersion();
-                });
-
+                    $.get(this.config.gitlabHost + '/api/v3/version', function (response) {
+                        if (response.version) {
+                            gitlabTimer.rememberPrivateKey();
+                            gitlabTimer.isAuthorized = true;
+                            gitlabTimer.showAuthDialog = false;
+                        }
+                        gitlabTimer.showPreloader = false;
+                        gitlabTimer.checkGitlabVersion();
+                    }).fail (function() {
+                        gitlabTimer.showPreloader = false;
+                    });
 
             },
             setPrivateKey: function () {

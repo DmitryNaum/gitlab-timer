@@ -44,7 +44,10 @@
         </div>
     </div>
     <div v-show="showIssueList">
-        <h1>Запустите таймер</h1>
+        <div>
+            <strong>Список задач</strong>
+            <button class="btn btn-default" @click="loadIssueList()">обновить</button>
+        </div>
         <div class="list-group" v-for="issue in issueList">
             <a href="#" class="list-group-item list-group-item-action flex-column align-items-start"
                :class="isActiveIssue(issue.id) ? 'active': ''">
@@ -71,7 +74,7 @@
                     <div class="col col-xs-8 ">
                         <div class="float-right">
                         <small v-if="isActiveIssue(issue.id)">{{timerActiveString}}</small>
-                        <div class="loader small" v-show="showTimerPreloader"></div>
+                        <div class="loader small" v-show="showTimerPreloader && isActiveIssue(issue.id)"></div>
                         </div>
                     </div>
                 </div>
