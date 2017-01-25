@@ -96,6 +96,11 @@
             startTimer: function (issueId) {
                 this.currentIssue = issueId;
                 this.timer = new timer();
+
+                $(window).on('beforeunload', function(e){
+                    return null;
+                }, false);
+
                 this.timerUpdateInterval = setInterval(function () {
                     var diff = gitlabTimer.timer.getTimeInSeconds();
                     var diffDays = Math.floor(diff / 86400); // days
@@ -129,6 +134,7 @@
                 this.timer.stop();
                 clearInterval(this.timerUpdateInterval);
                 this.timerUpdateInterval = null;
+                $(window).off('beforeunload');
 
                 var spentTime = Math.floor(this.timer.getTimeInSeconds() / 60);
                 if (spentTime){
