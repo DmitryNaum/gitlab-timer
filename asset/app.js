@@ -61,7 +61,7 @@
                 });
             },
             startTimer: function (issueId) {
-                if (this.currentIssue){
+                if (this.currentIssue) {
                     this.stopTimer();
                 }
                 this.currentIssue = issueId;
@@ -72,35 +72,15 @@
                 }, false);
 
                 this.timerUpdateInterval = setInterval(function () {
-                    var diff = gitlabTimer.timer.getTimeInSeconds();
-                    var diffDays = Math.floor(diff / 86400); // days
-                    var diffHrs = Math.floor((diff % 86400) / 3600); // hours
-                    var diffMins = Math.round(((diff % 86400) % 3600) / 60) || '0'; // minutes
-                    var diffSec = Math.round(((diff % 86400) % 3600) % 60); // minutes
-
-                    timeComponents = [];
-                    if (diffDays) {
-                        timeComponents.push(diffDays);
-                    }
-                    if (diffHrs) {
-                        timeComponents.push(diffHrs);
-                    }
-                    if (diffMins) {
-                        timeComponents.push(diffMins);
-                    }
-                    if (diffSec) {
-                        timeComponents.push(diffSec);
-                    }
-
-                    var timeString = timeComponents.join(':');
-
-                    gitlabTimer.timerActiveString = timeString;
+                    var formatted = gitlabTimer.timer.getFormattedTimeInSeconds();
+                    gitlabTimer.timerActiveString = formatted;
                 }, 1000)
             },
             stopTimer: function () {
                 var self = this;
                 var issue = self.currentIssue;
                 self.currentIssue = null;
+                self.timerActiveString = null;
 
                 self.timer.stop();
 
@@ -131,7 +111,7 @@
 
                 this.initApplication();
             },
-            initApplication: function(){
+            initApplication: function () {
                 var self = this;
                 // load configs
                 var configData = localStorage.getItem('config');
@@ -163,7 +143,7 @@
                         }
                     });
                 } else {
-                    var $modal =$(self.$el).find('#settingsDialog');
+                    var $modal = $(self.$el).find('#settingsDialog');
                     if (!$modal.is('.show')) {
                         $modal.modal('show');
                     }
@@ -204,7 +184,16 @@
             }
         },
         mounted: function () {
-            this.initApplication()
+            this.$watch('timerActiveString', function (newVal, oldVal) {
+                var baseTitle = $('title').data('title');
+                if (newVal) {
+                    $('title').text(newVal + ' | ' + baseTitle);
+                } else {
+                    $('title').text(baseTitle);
+                }
+            });
+
+            this.initApplication();
         },
 
     });
@@ -224,10 +213,49 @@
             return diffSeconds;
         }
 
+        function formatSeconds(seconds) {
+            var hours = Math.floor(seconds / 3600);
+            var minutes = Math.floor((seconds - (hours * 3600)) / 60);
+            var seconds = seconds - (hours * 3600) - (minutes * 60);
+            var time = "";
+
+            if (hours != 0) {
+                time = hours + ":";
+            }
+            if (minutes != 0 || time !== "") {
+                minutes = (minutes < 10 && time !== "") ? "0" + minutes : String(minutes);
+                time += minutes + ":";
+            }
+            if (time === "") {
+                time = seconds;
+            }
+            else {
+                time += (seconds < 10) ? "0" + seconds : String(seconds);
+            }
+            return time;
+        }
+
+        var getFormattedTimeInSeconds = function () {
+            var sec = getTimeInSeconds();
+
+            var str = formatSeconds(sec).toString();
+
+            var prefixes = [
+                'сек',
+                'мин',
+                'час',
+            ];
+            var prefixIndex = str.split(':').length - 1;
+            var prefix = prefixes[prefixIndex];
+
+            return str + " " + prefix;
+        };
+
         return {
             startTime: startTime,
             stop: stop,
-            getTimeInSeconds: getTimeInSeconds
+            getTimeInSeconds: getTimeInSeconds,
+            getFormattedTimeInSeconds: getFormattedTimeInSeconds
         }
     }
 
