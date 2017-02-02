@@ -1,4 +1,3 @@
-
 import jquery from "jquery";
 import Tether from "tether";
 import Vue from "vue";
@@ -42,7 +41,8 @@ Vue.use(VueResource);
             toggl: null,
             errorText: null,
             togglData: {
-                workspaces: []
+                workspaces: [],
+                activeTimeEntityId: null
             }
 
         },
@@ -81,6 +81,7 @@ Vue.use(VueResource);
                 });
             },
             startTimer: function (issueId) {
+                var self = this;
                 if (this.currentIssue) {
                     this.stopTimer();
                 }
@@ -108,8 +109,10 @@ Vue.use(VueResource);
                 var togglProjectId = this.getTogglProjectIdByGitlabprojectId(issue.project_id);
 
                 if (togglProjectId) {
-                    this.toggl.createTimeEntity(issue.title, -1, this.timer.getStartTime(), togglProjectId).then(function (r) {
-                        console.log(r);
+                    var timeEntityname = "#"+issue.iid+" "+issue.title
+                    this.toggl.createTimeEntity(timeEntityname, -1, this.timer.getStartTime(), togglProjectId, 'gitlab-timer').then(function (response) {
+                        var timeEntity = response.body.data
+                        self.togglData.activeTimeEntityId = timeEntity.id;
                     })
                 }
             },
@@ -126,12 +129,18 @@ Vue.use(VueResource);
 
                 $(window).off('beforeunload');
 
-                var spentTime = Math.floor(self.timer.getTimeInSeconds() / 60);
+                var spentTime = Math.floor(self.timer.getTimeInSeconds());
+                var spentTimeInMinutes = spentTime / 60;
                 if (spentTime) {
                     self.showTimerPreloader = true;
-                    self.gitlab.spentTime(self.currentProject, issue, spentTime.toString() + "m").then(function () {
+                    self.gitlab.spentTime(self.currentProject, issue, spentTimeInMinutes.toString() + "m").then(function () {
                         self.showTimerPreloader = false;
                     });
+
+                    if (self.togglData.activeTimeEntityId) {
+                        self.toggl.stopTimeEntity(self.togglData.activeTimeEntityId);
+                        self.togglData.activeTimeEntityId = null;
+                    }
                 }
             },
             isActiveIssue: function (issueId) {
@@ -252,7 +261,7 @@ Vue.use(VueResource);
             bindTogglToGitlab: function (togglProjectId, gitlabProjectId) {
                 var replaced;
                 this.projectBindings.gitlabToToggl.forEach(function (el) {
-                    if (el.gitlab == gitlabProjectId || el.toggl == togglProjectId) {
+                    if (el.gitlab == gitlabProjectId) {
                         el.gitlab = gitlabProjectId;
                         el.toggl = togglProjectId;
                         replaced = true;
@@ -454,6 +463,11 @@ Vue.use(VueResource);
             return Vue.http.post(url, data, requestOptions);
         };
 
+        var put = function (path, data) {
+            var url = server + path;
+            return Vue.http.put(url, data, requestOptions);
+        };
+
         var getWorkspaces = function () {
             return get('workspaces');
         };
@@ -462,24 +476,31 @@ Vue.use(VueResource);
             return get('workspaces/' + workspaceId + '/projects')
         };
 
-        var createTimeEntity = function (description, duration, start, pid) {
+        var createTimeEntity = function (description, duration, start, pid, createdWith) {
             var data = {
                 "time_entry": {
                     description: description,
                     duration: duration,
                     start: start,
-                    pid: pid
+                    pid: pid,
+                    created_with: createdWith
                 }
             };
 
             return post('time_entries', data);
+        };
+
+        var stopTimeEntity = function (timeEntityId) {
+            var path = "time_entries/" + timeEntityId.toString() + "/stop";
+
+            return put(path);
         }
 
         return {
             getWorkspaces: getWorkspaces,
             getWorkspaceProjects: getWorkspaceProjects,
-            createTimeEntity: createTimeEntity
-
+            createTimeEntity: createTimeEntity,
+            stopTimeEntity: stopTimeEntity
         }
     }
 
