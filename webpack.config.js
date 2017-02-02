@@ -108,7 +108,7 @@ module.exports.module = {
             test: /\.(woff2?|ttf|eot|svg|otf)$/,
             loader: 'file-loader',
             options: {
-                name: '/public/fonts/[name].[ext]?[hash]',
+                name: 'public/fonts/[name].[ext]?[hash]',
                 publicPath: '/'
             }
         }
