@@ -306,6 +306,9 @@ require('./module/timer');
         computed: {
             getPrivateKeyUrl: function () {
                 return this.getUrl('/profile/account');
+            },
+            currentHost:function () {
+                return location.host.split(':')[0];
             }
         },
         mounted: function () {

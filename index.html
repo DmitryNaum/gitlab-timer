@@ -70,6 +70,17 @@
                                    id="settings-togglApiKey" placeholder="">
                         </div>
                     </div>
+                    <div v-show="config.toggl.apiKey && currentHost != 'localhost'">
+                        <p>
+                            К сожалению или к счастью, toggl.com работает со сторонними сайтами исключительно по белым спискам,
+                            так что для удобной работы с этим приложением Вам необходимо добавить этот сайт в белый список toggl.com
+                            выполнив команду ниже в консоли вашего Linux
+                        </p>
+                        <code>curl -v -u {{config.toggl.apiKey}}:api_token
+                            -H "Content-Type: application/json"
+                            -d '{"domain":"{{currentHost}}"}'
+                            -X POST https://www.toggl.com/api/v9/me/cors</code>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
