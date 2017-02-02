@@ -11,34 +11,34 @@ Vue.use(VueResource);
 let markdownConverter = new showdown.Converter();
 
 let gitlabTimer = new Vue({
-    el      : "#gitlabTimer",
-    data    : {
-        config                       : {
+    el: "#gitlabTimer",
+    data: {
+        config: {
             gitlab: {
-                host      : null,
+                host: null,
                 privateKey: null,
             }
         },
         isGitlabSupportedTimetracking: false,
-        showTimeTrackingNotice       : false,
-        showAuthDialog               : false,
-        projectList                  : [],
-        issueList                    : [],
-        currentProject               : null,
-        showProjectList              : false,
-        showIssueList                : false,
-        currentIssue                 : null,
-        showPreloader                : false,
-        timer                        : null,
-        timerActiveString            : null,
-        timerUpdateInterval          : null,
-        showTimerPreloader           : false,
-        gitlab                       : null,
-        errorText                    : null
+        showTimeTrackingNotice: false,
+        showAuthDialog: false,
+        projectList: [],
+        issueList: [],
+        currentProject: null,
+        showProjectList: false,
+        showIssueList: false,
+        currentIssue: null,
+        showPreloader: false,
+        timer: null,
+        timerActiveString: null,
+        timerUpdateInterval: null,
+        showTimerPreloader: false,
+        gitlab: null,
+        errorText: null
 
     },
-    methods : {
-        getUrl         : function (path) {
+    methods: {
+        getUrl: function (path) {
             return this.config.gitlab.host + path;
         },
         loadProjectList: function () {
@@ -50,33 +50,26 @@ let gitlabTimer = new Vue({
                 gitlabTimer.showProjectList = true;
             })
         },
-        formatDate     : function (dateString) {
+        formatDate: function (dateString) {
             let date = new Date(dateString);
             return date.toLocaleString();
         },
-        setProject     : function (id) {
+        setProject: function (id) {
             this.currentProject = id;
             this.showProjectList = false;
             this.loadIssueList();
         },
-        loadIssueList  : function () {
+        loadIssueList: function () {
             let self = this;
             self.showPreloader = true;
 
             this.gitlab.getOpenedIssues(this.currentProject).then(function (response) {
-                self.issueList = response.body.filter(function (issue) {
-                    try {
-                        return issue.assignee.username === self.config.gitlab.username;
-                    }
-                    catch (e) {
-                        return false;
-                    }
-                });
+                self.issueList = response.body;
                 self.showPreloader = false;
                 self.showIssueList = true
             });
         },
-        startTimer     : function (issueId) {
+        startTimer: function (issueId) {
             if (this.currentIssue) {
                 this.stopTimer();
             }
@@ -92,7 +85,7 @@ let gitlabTimer = new Vue({
                 gitlabTimer.timerActiveString = formatted;
             }, 1000)
         },
-        stopTimer      : function () {
+        stopTimer: function () {
             let self = this;
             let issue = self.currentIssue;
             self.currentIssue = null;
@@ -113,10 +106,10 @@ let gitlabTimer = new Vue({
                 });
             }
         },
-        isActiveIssue  : function (issueId) {
+        isActiveIssue: function (issueId) {
             return this.currentIssue == issueId;
         },
-        applyConfig    : function () {
+        applyConfig: function () {
             if (!this.config.gitlab.host || !this.config.gitlab.privateKey) {
                 this.errorText = 'Неверные настройки';
                 return;
@@ -165,11 +158,11 @@ let gitlabTimer = new Vue({
                 }
             }
         },
-        testConfig     : function () {
+        testConfig: function () {
             let self = this;
             let promise = new Promise(function (resolve, reject) {
                 let result = {
-                    privateKeyValid       : undefined,
+                    privateKeyValid: undefined,
                     gitlabVersionSupported: undefined,
                 };
                 self.gitlab.getVersion().then(function (response) {
@@ -199,7 +192,7 @@ let gitlabTimer = new Vue({
             return this.getUrl('/profile/account');
         }
     },
-    mounted : function () {
+    mounted: function () {
         this.$watch('timerActiveString', function (newVal, oldVal) {
             let baseTitle = $('title').data('title');
             if (newVal) {
@@ -268,9 +261,9 @@ function timer() {
     };
 
     return {
-        startTime                : startTime,
-        stop                     : stop,
-        getTimeInSeconds         : getTimeInSeconds,
+        startTime: startTime,
+        stop: stop,
+        getTimeInSeconds: getTimeInSeconds,
         getFormattedTimeInSeconds: getFormattedTimeInSeconds
     }
 }
@@ -307,6 +300,10 @@ function gitlabApi(server, privatekey) {
     };
 
     let getProjects = function () {
+        return get('/api/v3/projects');
+    }
+
+    let getStarredProjects = function () {
         return get('/api/v3/projects/starred');
     }
 
@@ -322,10 +319,11 @@ function gitlabApi(server, privatekey) {
 
 
     return {
-        getVersion     : getVersion,
-        getProjects    : getProjects,
+        getVersion: getVersion,
+        getProjects: getProjects,
         getOpenedIssues: getOpenedIssues,
-        spentTime      : spentTime
+        spentTime: spentTime,
+        getStarredProjects: getStarredProjects
     }
 }
 
