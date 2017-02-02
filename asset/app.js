@@ -1,3 +1,13 @@
+
+import jquery from "jquery";
+import Tether from "tether";
+import Vue from "vue";
+import VueResource from "vue-resource";
+import showdown from "showdown";
+window.$ = window.Jquery = jquery;
+window.Tether = Tether;
+require("bootstrap");
+Vue.use(VueResource);
 ;(function () {
     var gitlabTimer = new Vue({
         el: "#gitlabTimer",
@@ -150,7 +160,7 @@
                 var configData = localStorage.getItem('config');
                 var config = JSON.parse(configData);
 
-                var configIsValid = !!config && !!config.gitlab.host && !!config.gitlab.privateKey && !!config.toggl.apiKey;
+                var configIsValid = !!config && !!config.gitlab.host && !!config.gitlab.privateKey && !!config.toggl && !!config.toggl.apiKey;
 
                 if (configIsValid) {
                     this.config = config;
