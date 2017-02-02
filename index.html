@@ -58,6 +58,13 @@
                                    id="settings-GitlabPrivateKey" placeholder="">
                         </div>
                     </div>
+                    <div class="form-group row">
+                        <label for="settings-togglApiKey" class="col-4 col-form-label">Toggl apiKey</label>
+                        <div class="col-8">
+                            <input v-model="config.toggl.apiKey" class="form-control" type="password"
+                                   id="settings-togglApiKey" placeholder="">
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
@@ -74,14 +81,45 @@
         </div>
         <div v-show="showProjectList">
             <h1>Выберите проект</h1>
-            <div class="list-group" v-for="project in projectList">
-                <a href="#" class="list-group-item list-group-item-action flex-column align-items-start"
-                   @click="setProject(project.id)">
+            <div class="list-group" v-for="gitlabProject in projectList">
+                <div class="list-group-item list-group-item-action">
                     <div class="d-flex w-100 justify-content-between">
-                        <h5 class="mb-1">{{project.name}}</h5>
-                        <small>{{formatDate(project.last_activity_at)}}</small>
+                        <div>
+                            <a href="#" class=" flex-column align-items-start"
+                               @click="setProject(gitlabProject.id)">
+                                <i class="fa fa-gitlab"></i> {{gitlabProject.name_with_namespace}}
+                            </a>
+                        </div>
+                        <div>
+
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-secondary">
+                                    {{getTogglProjectIdByGitlabprojectId(gitlabProject.id) ?
+                                    getTogglProject(getTogglProjectIdByGitlabprojectId(gitlabProject.id)).name:'Проект в toggl'}}
+                                </button>
+                                <button type="button" class="btn btn-secondary dropdown-toggle dropdown-toggle-split"
+                                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <span class="sr-only"></span>
+                                </button>
+                                <div class="dropdown-menu">
+                                    <div v-for="workspace in togglData.workspaces">
+                                        <div class="dropdown-divider"></div>
+                                        <span class="dropdown-item disabled">{{workspace.name}}</span>
+                                        <div v-for="togglProject in workspace.projects">
+                                            <a class="dropdown-item" href="#"
+                                               @click="bindTogglToGitlab(togglProject.id, gitlabProject.id)"
+                                               :class="getTogglProjectIdByGitlabprojectId(gitlabProject.id)==togglProject.id ? 'active':''">
+                                                {{togglProject.name}}
+                                            </a>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </a>
+                </div>
+
             </div>
         </div>
         <div v-show="showIssueList">

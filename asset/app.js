@@ -6,7 +6,13 @@
                 gitlab: {
                     host: null,
                     privateKey: null,
+                },
+                toggl: {
+                    apiKey: null
                 }
+            },
+            projectBindings: {
+                gitlabToToggl: []//{toggl:projectId, gitlab:projectId}
             },
             isGitlabSupportedTimetracking: false,
             showTimeTrackingNotice: false,
@@ -23,7 +29,11 @@
             timerUpdateInterval: null,
             showTimerPreloader: false,
             gitlab: null,
-            errorText: null
+            toggl: null,
+            errorText: null,
+            togglData: {
+                workspaces: []
+            }
 
         },
         methods: {
@@ -74,7 +84,24 @@
                 this.timerUpdateInterval = setInterval(function () {
                     var formatted = gitlabTimer.timer.getFormattedTimeInSeconds();
                     gitlabTimer.timerActiveString = formatted;
-                }, 1000)
+                }, 1000);
+
+                var issue;
+                this.issueList.forEach(function (iss) {
+                    if (iss.id == issueId) {
+                        issue = iss;
+                    }
+                });
+                if (!issue) {
+                    return;
+                }
+                var togglProjectId = this.getTogglProjectIdByGitlabprojectId(issue.project_id);
+
+                if (togglProjectId) {
+                    this.toggl.createTimeEntity(issue.title, -1, this.timer.getStartTime(), togglProjectId).then(function (r) {
+                        console.log(r);
+                    })
+                }
             },
             stopTimer: function () {
                 var self = this;
@@ -114,13 +141,21 @@
             initApplication: function () {
                 var self = this;
                 // load configs
+                var projectsBindingsData = localStorage.getItem('projectBindings');
+                var projectsBindings = JSON.parse(projectsBindingsData);
+                if (projectsBindings) {
+                    self.projectBindings = projectsBindings;
+                }
+
                 var configData = localStorage.getItem('config');
                 var config = JSON.parse(configData);
-                var configIsValid = !!config && !!config.gitlab.host && !!config.gitlab.privateKey;
+
+                var configIsValid = !!config && !!config.gitlab.host && !!config.gitlab.privateKey && !!config.toggl.apiKey;
 
                 if (configIsValid) {
                     this.config = config;
                     this.gitlab = new gitlabApi(this.config.gitlab.host, this.config.gitlab.privateKey);
+                    this.toggl = new togglApi(config.toggl.apiKey);
                     this.testConfig().then(function (data) {
                         self.showPreloader = false;
 
@@ -135,6 +170,7 @@
                         self.errorText = null;
 
                         self.loadProjectList();
+                        self.loadTogglWorkspacesAndProjects();
                     }, function (data) {
                         if (data.status === 401) {
                             self.errorText = "Неверный Gitlab PrivateKey. Введите новый в настройках";
@@ -176,6 +212,73 @@
 
                 return promise;
 
+            },
+            getTogglProjectIdByGitlabprojectId: function (gitlabProjectId) {
+                var togglprojectId = undefined;
+
+                this.projectBindings.gitlabToToggl.forEach(function (el) {
+                    if (el.gitlab == gitlabProjectId) {
+                        togglprojectId = el.toggl;
+                    }
+                });
+
+                return togglprojectId;
+            },
+            getTogglProject: function (id) {
+                var self = this;
+                var togglProject = undefined;
+                self.togglData.workspaces.forEach(function (workspace) {
+                    if (togglProject) {
+                        return;
+                    }
+                    workspace.projects.forEach(function (project) {
+                        if (project.id == id) {
+                            togglProject = project;
+                        }
+                    });
+                });
+                return togglProject;
+            },
+            bindTogglToGitlab: function (togglProjectId, gitlabProjectId) {
+                var replaced;
+                this.projectBindings.gitlabToToggl.forEach(function (el) {
+                    if (el.gitlab == gitlabProjectId || el.toggl == togglProjectId) {
+                        el.gitlab = gitlabProjectId;
+                        el.toggl = togglProjectId;
+                        replaced = true;
+                    } else {
+                        replaced = false;
+                    }
+                });
+                if (!replaced) {
+                    this.projectBindings.gitlabToToggl.push({gitlab: gitlabProjectId, toggl: togglProjectId});
+                }
+
+                var json = JSON.stringify(this.projectBindings);
+                localStorage.setItem('projectBindings', json);
+            },
+            loadTogglWorkspacesAndProjects: function () {
+                var self = this;
+                self.toggl.getWorkspaces().then(function (response) {
+                    var data = response.body;
+                    data.forEach(function (el) {
+                        var workspace = el;
+                        workspace.projects = [];
+                        self.togglData.workspaces.push(workspace);
+                        self.toggl.getWorkspaceProjects(workspace.id).then(function (response) {
+                            var projects = response.body;
+                            if (!projects) {
+                                return;
+                            }
+                            var wid = projects[0].wid;
+                            self.togglData.workspaces.forEach(function (workspace) {
+                                if (workspace.id == wid) {
+                                    workspace.projects = projects;
+                                }
+                            })
+                        })
+                    })
+                })
             }
         },
         computed: {
@@ -205,6 +308,9 @@
         var stop = function () {
             stopTime = new Date();
         };
+        var getStartTime = function () {
+            return startTime;
+        }
         var getTimeInSeconds = function () {
             var endTime = stopTime || new Date();
             var timeDiff = Math.abs(startTime.getTime() - endTime.getTime());
@@ -255,7 +361,8 @@
             startTime: startTime,
             stop: stop,
             getTimeInSeconds: getTimeInSeconds,
-            getFormattedTimeInSeconds: getFormattedTimeInSeconds
+            getFormattedTimeInSeconds: getFormattedTimeInSeconds,
+            getStartTime: getStartTime
         }
     }
 
@@ -313,5 +420,58 @@
         }
     }
 
-    window.gitlabApi = gitlabApi;
+    function togglApi(apiToken) {
+        if (!apiToken) {
+            throw new Error('Не указан toggle private key');
+        }
+
+        var server = 'https://www.toggl.com/api/v8/';
+
+        var requestOptions = {
+            headers: {'Authorization': "Basic " + btoa(apiToken + ":api_token")}
+        };
+
+        var get = function (path, body) {
+            var url = server + path;
+            var opts = JSON.parse(JSON.stringify(requestOptions));
+            opts.params = body;
+
+            return Vue.http.get(url, opts);
+        };
+
+        var post = function (path, data) {
+            var url = server + path;
+            return Vue.http.post(url, data, requestOptions);
+        };
+
+        var getWorkspaces = function () {
+            return get('workspaces');
+        };
+
+        var getWorkspaceProjects = function (workspaceId) {
+            return get('workspaces/' + workspaceId + '/projects')
+        };
+
+        var createTimeEntity = function (description, duration, start, pid) {
+            var data = {
+                "time_entry": {
+                    description: description,
+                    duration: duration,
+                    start: start,
+                    pid: pid
+                }
+            };
+
+            return post('time_entries', data);
+        }
+
+        return {
+            getWorkspaces: getWorkspaces,
+            getWorkspaceProjects: getWorkspaceProjects,
+            createTimeEntity: createTimeEntity
+
+        }
+    }
+
+    window.togglApi = togglApi;
 }());
