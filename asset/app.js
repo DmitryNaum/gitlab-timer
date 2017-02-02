@@ -2,11 +2,14 @@ import jquery from "jquery";
 import Tether from "tether";
 import Vue from "vue";
 import VueResource from "vue-resource";
-import showdown from "showdown";
 window.$ = window.Jquery = jquery;
 window.Tether = Tether;
 require("bootstrap");
 Vue.use(VueResource);
+require('./module/gitlab-api');
+require('./module/toggl-api');
+require('./module/timer');
+
 ;(function () {
     var gitlabTimer = new Vue({
         el: "#gitlabTimer",
@@ -320,189 +323,9 @@ Vue.use(VueResource);
 
     });
 
-    function timer() {
-        var startTime = new Date();
-        var stopTime;
-
-        var stop = function () {
-            stopTime = new Date();
-        };
-        var getStartTime = function () {
-            return startTime;
-        }
-        var getTimeInSeconds = function () {
-            var endTime = stopTime || new Date();
-            var timeDiff = Math.abs(startTime.getTime() - endTime.getTime());
-            var diffSeconds = Math.floor(timeDiff / 1000);
-
-            return diffSeconds;
-        }
-
-        function formatSeconds(seconds) {
-            var hours = Math.floor(seconds / 3600);
-            var minutes = Math.floor((seconds - (hours * 3600)) / 60);
-            var seconds = seconds - (hours * 3600) - (minutes * 60);
-            var time = "";
-
-            if (hours != 0) {
-                time = hours + ":";
-            }
-            if (minutes != 0 || time !== "") {
-                minutes = (minutes < 10 && time !== "") ? "0" + minutes : String(minutes);
-                time += minutes + ":";
-            }
-            if (time === "") {
-                time = seconds;
-            }
-            else {
-                time += (seconds < 10) ? "0" + seconds : String(seconds);
-            }
-            return time;
-        }
-
-        var getFormattedTimeInSeconds = function () {
-            var sec = getTimeInSeconds();
-
-            var str = formatSeconds(sec).toString();
-
-            var prefixes = [
-                'сек',
-                'мин',
-                'час',
-            ];
-            var prefixIndex = str.split(':').length - 1;
-            var prefix = prefixes[prefixIndex];
-
-            return str + " " + prefix;
-        };
-
-        return {
-            startTime: startTime,
-            stop: stop,
-            getTimeInSeconds: getTimeInSeconds,
-            getFormattedTimeInSeconds: getFormattedTimeInSeconds,
-            getStartTime: getStartTime
-        }
-    }
-
-    function gitlabApi(server, privatekey) {
-
-        if (!server) {
-            throw new Error('Не указан сервер gitlab')
-        }
-        if (!privatekey) {
-            throw new Error('Не указан приватный ключ')
-        }
-
-        var requestOptions = {
-            headers: {'PRIVATE-TOKEN': privatekey}
-        };
-
-        var get = function (path, body) {
-            var url = server + path;
-            var opts = JSON.parse(JSON.stringify(requestOptions));
-            opts.params = body;
-
-            return Vue.http.get(url, opts);
-        }
 
 
-        var post = function (path, data) {
-            var url = server + path;
-            return Vue.http.post(url, data, requestOptions);
-        }
-
-        var getVersion = function () {
-            return get('/api/v3/version');
-        };
-
-        var getProjects = function () {
-            return get('/api/v3/projects?per_page=100');
-        }
-
-        var getOpenedIssues = function (projectId) {
-            var path = '/api/v3/projects/' + projectId + '/issues'
-            return get(path, {state: "opened", per_page: 100});
-        }
-
-        var spentTime = function (projectId, issueId, time) {
-            var path = "/api/v3/projects/" + projectId + "/issues/" + issueId + "/add_spent_time?duration=" + time
-            return post(path);
-        }
 
 
-        return {
-            getVersion: getVersion,
-            getProjects: getProjects,
-            getOpenedIssues: getOpenedIssues,
-            spentTime: spentTime
-        }
-    }
 
-    function togglApi(apiToken) {
-        if (!apiToken) {
-            throw new Error('Не указан toggle private key');
-        }
-
-        var server = 'https://www.toggl.com/api/v8/';
-
-        var requestOptions = {
-            headers: {'Authorization': "Basic " + btoa(apiToken + ":api_token")}
-        };
-
-        var get = function (path, body) {
-            var url = server + path;
-            var opts = JSON.parse(JSON.stringify(requestOptions));
-            opts.params = body;
-
-            return Vue.http.get(url, opts);
-        };
-
-        var post = function (path, data) {
-            var url = server + path;
-            return Vue.http.post(url, data, requestOptions);
-        };
-
-        var put = function (path, data) {
-            var url = server + path;
-            return Vue.http.put(url, data, requestOptions);
-        };
-
-        var getWorkspaces = function () {
-            return get('workspaces');
-        };
-
-        var getWorkspaceProjects = function (workspaceId) {
-            return get('workspaces/' + workspaceId + '/projects')
-        };
-
-        var createTimeEntity = function (description, duration, start, pid, createdWith) {
-            var data = {
-                "time_entry": {
-                    description: description,
-                    duration: duration,
-                    start: start,
-                    pid: pid,
-                    created_with: createdWith
-                }
-            };
-
-            return post('time_entries', data);
-        };
-
-        var stopTimeEntity = function (timeEntityId) {
-            var path = "time_entries/" + timeEntityId.toString() + "/stop";
-
-            return put(path);
-        }
-
-        return {
-            getWorkspaces: getWorkspaces,
-            getWorkspaceProjects: getWorkspaceProjects,
-            createTimeEntity: createTimeEntity,
-            stopTimeEntity: stopTimeEntity
-        }
-    }
-
-    window.togglApi = togglApi;
 }());

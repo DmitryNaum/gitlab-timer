@@ -4,10 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title data-title="gitlab timer">gitlab timer</title>
-    <!--<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css"-->
-          <!--integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">-->
     <link rel="stylesheet" href="public/css/app.css">
-    <!--<link rel="stylesheet" href="asset/vendor/font-awesome-4.7.0/css/font-awesome.min.css">-->
 </head>
 <body>
 <div id="gitlabTimer" class="container">
@@ -53,7 +50,7 @@
                     </div>
                     <div class="form-group row">
                         <label for="settings-GitlabPrivateKey" class="col-4 col-form-label">
-                            <span v-if="config.gitlab.privateKey">
+                            <span v-if="config.gitlab.host">
                                 <a :href="getUrl('/profile/account')" target="_blank">Gitlab PrivateKey </a></span>
                             <span v-else-if="config.gitlab.privateKey"> Gitlab PrivateKey </span>
                         </label>
@@ -89,8 +86,9 @@
         </div>
         <div v-show="showProjectList">
             <h1>Выберите проект</h1>
-            <div class="list-group" v-for="gitlabProject in projectList">
-                <div class="list-group-item list-group-item-action">
+            <div class="list-group">
+
+                <div v-for="gitlabProject in projectList" class="list-group-item list-group-item-action">
                     <div class="d-flex w-100 justify-content-between">
                         <div>
                             <a href="#" class=" flex-column align-items-start"
@@ -101,11 +99,12 @@
                         <div>
 
                             <div class="btn-group">
-                                <button type="button" class="btn btn-secondary">
+                                <button type="button" class="btn" :class="getTogglProjectIdByGitlabprojectId(gitlabProject.id) ? 'btn-success' : 'btn-secondary'">
                                     {{getTogglProjectIdByGitlabprojectId(gitlabProject.id) ?
-                                    getTogglProject(getTogglProjectIdByGitlabprojectId(gitlabProject.id)).name:'Проект в toggl'}}
+                                    getTogglProject(getTogglProjectIdByGitlabprojectId(gitlabProject.id)).name : 'Проект в toggl'}}
                                 </button>
-                                <button type="button" class="btn btn-secondary dropdown-toggle dropdown-toggle-split"
+                                <button type="button" class="btn dropdown-toggle dropdown-toggle-split"
+                                        :class="getTogglProjectIdByGitlabprojectId(gitlabProject.id) ? 'btn-success' : 'btn-secondary'"
                                         data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                     <span class="sr-only"></span>
                                 </button>
@@ -121,7 +120,6 @@
                                             </a>
                                         </div>
                                     </div>
-
                                 </div>
                             </div>
                         </div>
@@ -136,52 +134,29 @@
                 <button class="btn btn-default" @click="loadIssueList()">обновить</button>
             </div>
             <div class="list-group" v-for="issue in issueList">
-                <a href="#" class="list-group-item list-group-item-action flex-column align-items-start"
+                <div class="list-group-item list-group-item-action flex-column align-items-start"
                    :class="isActiveIssue(issue.id) ? 'active': ''">
                     <div class="d-flex w-100 justify-content-between">
                         <h5 class="mb-1">{{issue.title}}</h5>
-                        <small>Последнее изменение: {{formatDate(issue.updated_at)}}</small>
-
-
-                    </div>
-                    <div class="row">
-                        <div class="col col-xs-4">
-
-                            <button class="btn btn-primary"
+                        <div>
+                            <button class="btn btn-outline-primary"
                                     @click="startTimer(issue.id)"
                                     :class="isActiveIssue(issue.id) ? 'hidden-xs-up' : ''">Запустить таймер
                             </button>
-                            <button class="btn btn-default"
+                            <button class="btn btn-success"
                                     @click="stopTimer(issue.id)"
                                     :class="!!currentIssue && isActiveIssue(issue.id) ? '' : 'hidden-xs-up'">Остановить
                                 таймер
-                            </button>
-                        </div>
-                        <div class="col col-xs-8 ">
-                            <div class="float-right">
                                 <small v-if="isActiveIssue(issue.id)">{{timerActiveString}}</small>
                                 <div class="loader small" v-show="showTimerPreloader && isActiveIssue(issue.id)"></div>
-                            </div>
+                            </button>
                         </div>
                     </div>
-                </a>
+                </div>
             </div>
         </div>
     </div>
 </div>
-
-<!-- jQuery first, then Tether, then Bootstrap JS. -->
-
-<!--<script src="https://code.jquery.com/jquery-3.1.1.min.js"-->
-        <!--crossorigin="anonymous"></script>-->
-<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js"-->
-        <!--integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb"-->
-        <!--crossorigin="anonymous"></script>-->
-<!--<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js"-->
-        <!--integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn"-->
-        <!--crossorigin="anonymous"></script>-->
-<!--<script src="asset/vendor/vue.js"></script>-->
-<!--<script src="asset/vendor/vue-resource-1.0.3/dist/vue-resource.min.js"></script>-->
 <script src="public/js/app.js"></script>
 </body>
 </html>
