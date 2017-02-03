@@ -91,3 +91,59 @@
 .body.disabled{
     opacity: 0.5;
 }
+
+
+.issue-list-item {
+    transition: opacity .5s;
+}
+
+.issue-list-move {
+    transition: transform .1s ease-in;
+    opacity: 0;
+}
+.issue-list-move:nth-child(2n) {
+    transition: transform .3s ease-in;
+    opacity: 0;
+}
+.issue-list-move:nth-child(3n) {
+    transition: transform .2s ease-in;
+    opacity: 0;
+}
+
+.issue-list-move:nth-child(4n) {
+    transition: transform .2s ease-in;
+    opacity: 0;
+}
+.issue-list-move:nth-child(5n) {
+    transition: transform .1s ease-in;
+    opacity: 0;
+}
+
+.issue-list-leave-active {
+    position: absolute;
+    width: 100%;
+}
+
+.issue-list-leave-active {
+    visibility: hidden;
+}
+
+.issue-list-enter-active {
+    transition-delay: .1s;
+}
+.issue-list-enter-active:nth-child(2n) {
+    transition-delay: .3s;
+}
+.issue-list-enter-active:nth-child(3n) {
+    transition-delay: .2s;
+}
+.issue-list-enter-active:nth-child(4n) {
+    transition-delay: .2s;
+}
+.issue-list-enter-active:nth-child(5n) {
+    transition-delay: .1s;
+}
+
+.issue-list-enter {
+    opacity: 0;
+}

@@ -70,17 +70,6 @@
                                    id="settings-togglApiKey" placeholder="">
                         </div>
                     </div>
-                    <div v-show="config.toggl.apiKey && currentHost != 'localhost'">
-                        <p>
-                            К сожалению или к счастью, toggl.com работает со сторонними сайтами исключительно по белым спискам,
-                            так что для удобной работы с этим приложением Вам необходимо добавить этот сайт в белый список toggl.com
-                            выполнив команду ниже в консоли вашего Linux
-                        </p>
-                        <code>curl -v -u {{config.toggl.apiKey}}:api_token
-                            -H "Content-Type: application/json"
-                            -d '{"domain":"{{currentHost}}"}'
-                            -X POST https://www.toggl.com/api/v9/me/cors</code>
-                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
@@ -110,7 +99,8 @@
                         <div>
 
                             <div class="btn-group">
-                                <button type="button" class="btn" :class="getTogglProjectIdByGitlabprojectId(gitlabProject.id) ? 'btn-success' : 'btn-secondary'">
+                                <button type="button" class="btn"
+                                        :class="getTogglProjectIdByGitlabprojectId(gitlabProject.id) ? 'btn-success' : 'btn-secondary'">
                                     {{getTogglProjectIdByGitlabprojectId(gitlabProject.id) ?
                                     getTogglProject(getTogglProjectIdByGitlabprojectId(gitlabProject.id)).name : 'Проект в toggl'}}
                                 </button>
@@ -143,10 +133,16 @@
             <div>
                 <strong>Список задач</strong>
                 <button class="btn btn-default" @click="loadIssueList()">обновить</button>
+                <label>
+                    <input type="checkbox" v-model="assigned">
+                    Только назначенные мне
+                </label>
+
             </div>
-            <div class="list-group" v-for="issue in issueList">
+            <transition-group name="issue-list" tag="div">
+            <div class="list-group issue-list-item" v-for="issue in filteredIssueList" :key="issue.id">
                 <div class="list-group-item list-group-item-action flex-column align-items-start"
-                   :class="isActiveIssue(issue.id) ? 'active': ''">
+                     :class="isActiveIssue(issue.id) ? 'active': ''">
                     <div class="d-flex w-100 justify-content-between">
                         <h5 class="mb-1">{{issue.title}}</h5>
                         <div>
@@ -165,6 +161,7 @@
                     </div>
                 </div>
             </div>
+            </transition-group>
         </div>
     </div>
 </div>
