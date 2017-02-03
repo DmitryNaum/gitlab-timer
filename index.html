@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title data-title="gitlab timer">gitlab timer</title>
+    <title data-title="Gitlab timer">Gitlab timer</title>
     <link rel="stylesheet" href="public/css/app.css">
 </head>
 <body>
@@ -86,8 +86,14 @@
         </div>
         <div v-show="showProjectList">
             <h1>Выберите проект</h1>
+            <div>
+                Отображать
+                <select v-model="projectListType">
+                    <option value="all">Все</option>
+                    <option value="starred">Избранные</option>
+                </select>
+            </div>
             <div class="list-group">
-
                 <div v-for="gitlabProject in projectList" class="list-group-item list-group-item-action">
                     <div class="d-flex w-100 justify-content-between">
                         <div>

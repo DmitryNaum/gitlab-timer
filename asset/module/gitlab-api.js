@@ -39,6 +39,10 @@ function GitlabApi(server, privatekey) {
     };
 
     let getProjects = function () {
+        return get('/api/v3/projects');
+    };
+
+    let getStarredProjects = function () {
         return get('/api/v3/projects/starred');
     };
 
@@ -58,7 +62,8 @@ function GitlabApi(server, privatekey) {
         getProjects    : getProjects,
         getOpenedIssues: getOpenedIssues,
         spentTime      : spentTime,
-        getUser        : getUser
+        getUser        : getUser,
+        getStarredProjects: getStarredProjects
     }
 }
 
