@@ -2,18 +2,19 @@ import jquery from "jquery";
 import Tether from "tether";
 import Vue from "vue";
 import VueResource from "vue-resource";
-// require('./module/gitlab-api');
 import gitlabApi from "./module/gitlab-api";
-// require('./module/toggl-api');
-// require('./module/timer');
 import timer from "./module/timer";
 import togglApi from "./module/toggl-api";
+import VueMarkdown from 'vue-markdown';
 window.$ = window.Jquery = jquery;
 window.Tether = Tether;
 require("bootstrap");
 Vue.use(VueResource);
 
 var gitlabTimer = new Vue({
+    components: {
+        VueMarkdown
+    },
     el: "#gitlabTimer",
     data: {
         gitlabUser: null,
@@ -51,7 +52,8 @@ var gitlabTimer = new Vue({
             workspaces: [],
             activeTimeEntityId: null
         },
-        projectListType: 'all'
+        projectListType: 'all',
+        renderedIssue:null
 
     },
     methods: {
@@ -318,6 +320,14 @@ var gitlabTimer = new Vue({
                     })
                 })
             })
+        },
+        renderIssue:function (issueId) {
+            var self = this;
+            this.issueList.forEach(function(issue){
+                if (issue.id == issueId) {
+                    self.renderedIssue = issue;
+                }
+            })
         }
     },
     computed: {
@@ -326,7 +336,7 @@ var gitlabTimer = new Vue({
                 return this.issueList.filter((issue) => issue.assignee && issue.assignee.id === this.gitlabUser.id);
             }
 
-            return this.issueList;
+            return this.issueList || [];
         },
         getPrivateKeyUrl () {
             return this.getUrl('/profile/account');
