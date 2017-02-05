@@ -9,7 +9,9 @@
     right: 0;
     top: auto;
     bottom: auto;
-    top: 15%;
+    //top: 15%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.8);
 }
 .loader {
     color: #31b0d5;
@@ -146,4 +148,39 @@
 
 .issue-list-enter {
     opacity: 0;
+}
+html, .app{
+    height: 100%;
+}
+body{
+height: calc(100% - 60px);
+}
+.body{
+    height: 100%;
+    .column{
+        border-left: 1px solid rgba(0, 0, 0, 0.125);
+        overflow-y: scroll;
+
+        .control{
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+        }
+    }
+    .column:first-of-type{
+        border-left: none;
+    }
+    .selectable{
+        cursor: pointer;
+    }
+    .middle{
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        .empty-box-text{
+            text-align: center;
+            font-size: 36px;
+            color: #ccc;
+        }
+    }
 }
