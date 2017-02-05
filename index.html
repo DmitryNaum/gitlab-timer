@@ -131,7 +131,7 @@
     </div>
     <div class="col-md-4 column" :class="filteredIssueList.length  ? '': 'middle'">
         <div class="empty-box-text" v-show="!(filteredIssueList.length )">
-            Как только Вы веберете проект, здесь будет отображаться список задач
+            Как только Вы выберете проект, здесь будет отображаться список задач
         </div>
         <div v-show="filteredIssueList.length">
             <div class="control">
@@ -179,7 +179,7 @@
     </div>
     <div class="col-md-4 column" :class="renderedIssue ? '': 'middle'">
         <div class="empty-box-text" v-show="!renderedIssue">
-            Как только Вы веберете задачу, здесь будет отображаться её описание
+            Как только Вы выберете задачу, здесь будет отображаться её описание
         </div>
         <div v-if="renderedIssue">
             <div class="control">
