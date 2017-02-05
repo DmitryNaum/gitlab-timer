@@ -354,6 +354,7 @@ var gitlabTimer = new Vue({
 
         this.$watch('projectListType', this.loadProjectList);
 
+        this.$el.classList.remove('hidden-xs-up');
         this.initApplication();
     },
 
