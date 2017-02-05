@@ -78,106 +78,106 @@
     </div>
 
     <div class="body row">
-    <div class="col-md-4 column">
-        <div class="control">
-        <h2>Проекты</h2>
-        <div>
-            Отображать
-            <select v-model="projectListType" class="custom-select">
-                <option value="all">Все</option>
-                <option value="starred">Избранные</option>
-            </select>
-        </div>
-        </div>
-        <div class="list-group">
-            <div v-for="gitlabProject in projectList" class="list-group-item list-group-item-action"
-                 :class="gitlabProject.id == currentProject ? 'active': ''">
-                <div class="d-flex w-100 justify-content-between">
-                    <div @click="setProject(gitlabProject.id); renderedIssue=null;"
-                         class="selectable">
-                        <i class="fa fa-gitlab"></i> {{gitlabProject.name_with_namespace}}
-                    </div>
-                    <div>
-                        <div class="btn-group">
-                            <button type="button" class="btn"
-                                    :class="getTogglProjectIdByGitlabprojectId(gitlabProject.id) ? 'btn-success' : 'btn-secondary'">
-                                {{getTogglProjectIdByGitlabprojectId(gitlabProject.id) ?
-                                getTogglProject(getTogglProjectIdByGitlabprojectId(gitlabProject.id)).name : 'Проект в toggl'}}
-                            </button>
-                            <button type="button" class="btn dropdown-toggle dropdown-toggle-split"
-                                    :class="getTogglProjectIdByGitlabprojectId(gitlabProject.id) ? 'btn-success' : 'btn-secondary'"
-                                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <span class="sr-only"></span>
-                            </button>
-                            <div class="dropdown-menu">
-                                <div v-for="workspace in togglData.workspaces">
-                                    <div class="dropdown-divider"></div>
-                                    <span class="dropdown-item disabled">{{workspace.name}}</span>
-                                    <div v-for="togglProject in workspace.projects">
-                                        <a class="dropdown-item" href="#"
-                                           @click="bindTogglToGitlab(togglProject.id, gitlabProject.id)"
-                                           :class="getTogglProjectIdByGitlabprojectId(gitlabProject.id)==togglProject.id ? 'active':''">
-                                            {{togglProject.name}}
-                                        </a>
+        <div class="col-4 column">
+            <div class="control">
+            <h2>Проекты</h2>
+            <div>
+                Отображать
+                <select v-model="projectListType" class="custom-select">
+                    <option value="all">Все</option>
+                    <option value="starred">Избранные</option>
+                </select>
+            </div>
+            </div>
+            <div class="list-group">
+                <div v-for="gitlabProject in projectList" class="list-group-item list-group-item-action"
+                     :class="gitlabProject.id == currentProject ? 'active': ''">
+                    <div class="d-flex w-100 justify-content-between">
+                        <div @click="setProject(gitlabProject.id); renderedIssue=null;"
+                             class="selectable">
+                            <i class="fa fa-gitlab"></i> {{gitlabProject.name_with_namespace}}
+                        </div>
+                        <div>
+                            <div class="btn-group">
+                                <button type="button" class="btn"
+                                        :class="getTogglProjectIdByGitlabprojectId(gitlabProject.id) ? 'btn-success' : 'btn-secondary'">
+                                    {{getTogglProjectIdByGitlabprojectId(gitlabProject.id) && getTogglProject(getTogglProjectIdByGitlabprojectId(gitlabProject.id)) ?
+                                    getTogglProject(getTogglProjectIdByGitlabprojectId(gitlabProject.id)).name : 'Проект в toggl'}}
+                                </button>
+                                <button type="button" class="btn dropdown-toggle dropdown-toggle-split"
+                                        :class="getTogglProjectIdByGitlabprojectId(gitlabProject.id) ? 'btn-success' : 'btn-secondary'"
+                                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <span class="sr-only"></span>
+                                </button>
+                                <div class="dropdown-menu dropdown-menu-right">
+                                    <div v-for="workspace in togglData.workspaces">
+                                        <div class="dropdown-divider"></div>
+                                        <span class="dropdown-item disabled">{{workspace.name}}</span>
+                                        <div v-for="togglProject in workspace.projects">
+                                            <a class="dropdown-item" href="#"
+                                               @click="bindTogglToGitlab(togglProject.id, gitlabProject.id)"
+                                               :class="getTogglProjectIdByGitlabprojectId(gitlabProject.id)==togglProject.id ? 'active':''">
+                                                {{togglProject.name}}
+                                            </a>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
+            </div>
         </div>
-    </div>
-    <div class="col-md-4 column" :class="filteredIssueList.length  ? '': 'middle'">
-        <div class="empty-box-text" v-show="!(filteredIssueList.length )">
-            Как только Вы выберете проект, здесь будет отображаться список задач
-        </div>
-        <div v-show="filteredIssueList.length">
-            <div class="control">
-                <h2>Список задач
-                    <a href="#" v-show="currentProject" @click="loadIssueList(); renderedIssue={};" title="Обновить"><i class="fa fa-refresh"></i></a>
-                </h2>
-                <div v-show="currentProject">
-                <div class="form-group">
-                    <label class="custom-control custom-checkbox">
-                        <input type="checkbox" class="custom-control-input" v-model="assigned">
-                        <span class="custom-control-indicator"></span>
-                        <span class="custom-control-description">Только назначенные мне</span>
-                    </label>
+        <div class="col-4 column" :class="filteredIssueList.length  ? '': 'middle'">
+            <div class="empty-box-text" v-show="!(filteredIssueList.length )">
+                Как только Вы выберете проект, здесь будет отображаться список задач
+            </div>
+            <div v-show="filteredIssueList.length">
+                <div class="control">
+                    <h2>Список задач
+                        <a href="#" v-show="currentProject" @click="loadIssueList(); renderedIssue={};" title="Обновить"><i class="fa fa-refresh"></i></a>
+                    </h2>
+                    <div v-show="currentProject">
+                    <div class="form-group">
+                        <label class="custom-control custom-checkbox">
+                            <input type="checkbox" class="custom-control-input" v-model="assigned">
+                            <span class="custom-control-indicator"></span>
+                            <span class="custom-control-description">Только назначенные мне</span>
+                        </label>
+                    </div>
+
+                    </div>
                 </div>
 
-                </div>
-            </div>
-
-            <div class="list-group issue-list-item">
-                <transition-group name="issue-list" tag="div">
-                    <div v-for="issue in filteredIssueList" :key="issue.id"
-                         class="list-group-item list-group-item-action selectable flex-column align-items-start"
-                         :class="isActiveIssue(issue.id) ? 'active': ''"
-                        @click="renderIssue(issue.id)">
-                        <div class="d-flex w-100 justify-content-between">
-                            <h5 class="mb-1">{{issue.title}}</h5>
-                            <div>
-                                <button class="btn btn-outline-primary"
-                                        @click="startTimer(issue.id)"
-                                        :class="isActiveIssue(issue.id) ? 'hidden-xs-up' : ''">Запустить таймер
-                                </button>
-                                <button class="btn btn-success"
-                                        @click="stopTimer(issue.id)"
-                                        :class="!!currentIssue && isActiveIssue(issue.id) ? '' : 'hidden-xs-up'">Остановить
-                                    таймер
-                                    <small v-if="isActiveIssue(issue.id)">{{timerActiveString}}</small>
-                                    <div class="loader small" v-show="showTimerPreloader && isActiveIssue(issue.id)"></div>
-                                </button>
+                <div class="list-group issue-list-item">
+                    <transition-group name="issue-list" tag="div">
+                        <div v-for="issue in filteredIssueList" :key="issue.id"
+                             class="list-group-item list-group-item-action selectable flex-column align-items-start"
+                             :class="isActiveIssue(issue.id) ? 'active': ''"
+                            @click="renderIssue(issue.id)">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">{{issue.title}}</h5>
+                                <div>
+                                    <button class="btn btn-outline-primary"
+                                            @click="startTimer(issue.id)"
+                                            :class="isActiveIssue(issue.id) ? 'hidden-xs-up' : ''">Запустить таймер
+                                    </button>
+                                    <button class="btn btn-success"
+                                            @click="stopTimer(issue.id)"
+                                            :class="!!currentIssue && isActiveIssue(issue.id) ? '' : 'hidden-xs-up'">Остановить
+                                        таймер
+                                        <small v-if="isActiveIssue(issue.id)">{{timerActiveString}}</small>
+                                        <div class="loader small" v-show="showTimerPreloader && isActiveIssue(issue.id)"></div>
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </transition-group>
+                    </transition-group>
+                </div>
             </div>
         </div>
-    </div>
-    <div class="col-md-4 column" :class="renderedIssue ? '': 'middle'">
+        <div class="col-4 column" :class="renderedIssue ? '': 'middle'">
         <div class="empty-box-text" v-show="!renderedIssue">
             Как только Вы выберете задачу, здесь будет отображаться её описание
         </div>
