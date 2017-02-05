@@ -130,8 +130,14 @@
             </div>
         </div>
         <div class="col-4 column" :class="filteredIssueList.length  ? '': 'middle'">
-            <div class="empty-box-text" v-show="!(filteredIssueList.length )">
+
+            <div class="empty-box-text" v-show="!(filteredIssueList.length) || !currentProject">
+            <div  v-show="!(filteredIssueList.length) && !currentProject">
                 Как только Вы выберете проект, здесь будет отображаться список задач
+            </div>
+            <div  v-show="currentProject">
+                В выбранном проекте пока нет ни одной задачи
+            </div>
             </div>
             <div v-show="filteredIssueList.length">
                 <div class="control">
