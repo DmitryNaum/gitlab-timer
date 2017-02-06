@@ -183,11 +183,11 @@
                 </div>
             </div>
         </div>
-        <div class="col-4 column" :class="renderedIssue ? '': 'middle'">
-        <div class="empty-box-text" v-show="!renderedIssue">
+        <div class="col-4 column" :class="renderedIssue && renderedIssue.hasOwnProperty('id') ? '': 'middle'">
+        <div class="empty-box-text" v-show="!(renderedIssue && renderedIssue.hasOwnProperty('id'))">
             Как только Вы выберете задачу, здесь будет отображаться её описание
         </div>
-        <div v-if="renderedIssue">
+        <div v-if="renderedIssue && renderedIssue.hasOwnProperty('id')">
             <div class="control">
                 <button class="btn btn-outline-primary"
                         @click="startTimer(renderedIssue.id)"
