@@ -59,7 +59,6 @@ var gitlabTimer = new Vue({
     methods: {
         replaceImages (description) {
             let currentProject = this.projectList.filter((project) => this.currentProject === project.id).shift();
-            console.log(currentProject.web_url);
             return description.replace(/\[image\]\(\/uploads/g, '[image](' + currentProject.web_url + '/uploads');
         },
         getUrl: function (path) {
