@@ -205,7 +205,7 @@
                 {{renderedIssue.title}}
                 <a :href="renderedIssue.web_url" target="_blank"><span class="fa fa-gitlab"></span> </a>
             </h3>
-            <div><vue-markdown :source="renderedIssue.description"></vue-markdown></div>
+            <div><vue-markdown :source="replaceImages(renderedIssue.description)"></vue-markdown></div>
         </div>
     </div>
     </div>
