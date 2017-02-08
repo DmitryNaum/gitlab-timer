@@ -76,6 +76,35 @@
             </div>
         </div>
     </div>
+    <div class="fullscreen-issue-viewer" v-show="viewIssueInFullScreenMode">
+        <div v-if="gitlab.renderedIssue.hasOwnProperty('id')">
+            <div class="control pull-right">
+                <a href="#" title="Запустить таймер"
+                        @click="startTimer(gitlab.renderedIssue.id)"
+                        :class="isActiveIssue(gitlab.renderedIssue.id) ? 'hidden-xs-up' : ''">
+                    <span  class="fa fa-play"></span>
+                </a>
+                <span :class="!!gitlab.currentIssue && isActiveIssue(gitlab.renderedIssue.id) ? '' : 'hidden-xs-up'">
+                    <small v-if="isActiveIssue(gitlab.renderedIssue.id)">{{timerActiveString}} | </small>
+                    <a href="#" title="остановить таймер"
+                            @click="stopTimer(gitlab.renderedIssue.id)">
+                        <span  class="fa fa-stop"></span>
+                    </a>
+                </span>
+                <a href="#" @click.prevent="viewIssueInFullScreenMode = false">
+                    <span class="fa fa-compress"></span>
+                </a>
+            </div>
+
+            <h3>
+                <a :href="gitlab.renderedIssue.web_url" target="_blank"><span class="fa fa-gitlab"></span> </a>
+                {{gitlab.renderedIssue.title}}
+            </h3>
+            <div>
+                <vue-markdown :source="replaceImages(gitlab.renderedIssue.description)"></vue-markdown>
+            </div>
+        </div>
+    </div>
 
     <div class="body row">
         <div class="col-4 column">
@@ -199,11 +228,14 @@
                     таймер
                     <small v-if="isActiveIssue(gitlab.renderedIssue.id)">{{timerActiveString}}</small>
                 </button>
+                <div class="pull-right">
+                    <a href="#" @click.prevent="viewIssueInFullScreenMode = true"><span class="fa fa-arrows-alt fa-fw"></span></a>
+                </div>
             </div>
 
             <h3>
-                {{gitlab.renderedIssue.title}}
                 <a :href="gitlab.renderedIssue.web_url" target="_blank"><span class="fa fa-gitlab"></span> </a>
+                {{gitlab.renderedIssue.title}}
             </h3>
             <div><vue-markdown :source="replaceImages(gitlab.renderedIssue.description)"></vue-markdown></div>
         </div>
