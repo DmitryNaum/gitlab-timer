@@ -56,7 +56,8 @@ let gitlabTimer = new Vue({
         },
 
         isGitlabSupportedTimetracking: false,
-        errorText: null
+        errorText: null,
+        viewIssueInFullScreenMode: false
 
     },
     methods: {
