@@ -41,18 +41,18 @@
                     <div class="form-group row">
                         <label for="settings-GitlabServer" class="col-4 col-form-label">Gitlab сервер</label>
                         <div class="col-8">
-                            <input v-model="config.gitlab.host" class="form-control" type="text"
+                            <input v-model="storedData.config.gitlab.host" class="form-control" type="text"
                                    id="settings-GitlabServer" placeholder="https://gitlab.com">
                         </div>
                     </div>
                     <div class="form-group row">
                         <label for="settings-GitlabPrivateKey" class="col-4 col-form-label">
-                            <span v-if="config.gitlab.host">
+                            <span v-if="storedData.config.gitlab.host">
                                 <a :href="getUrl('/profile/account')" target="_blank">Gitlab PrivateKey </a></span>
-                            <span v-else-if="config.gitlab.privateKey"> Gitlab PrivateKey </span>
+                            <span v-else-if="storedData.config.gitlab.privateKey"> Gitlab PrivateKey </span>
                         </label>
                         <div class="col-8">
-                            <input v-model="config.gitlab.privateKey" class="form-control" type="password"
+                            <input v-model="storedData.config.gitlab.privateKey" class="form-control" type="password"
                                    id="settings-GitlabPrivateKey" placeholder="">
                         </div>
                     </div>
@@ -63,7 +63,7 @@
                             </a>
                         </label>
                         <div class="col-8">
-                            <input v-model="config.toggl.apiKey" class="form-control" type="password"
+                            <input v-model="storedData.config.toggl.apiKey" class="form-control" type="password"
                                    id="settings-togglApiKey" placeholder="">
                         </div>
                     </div>
@@ -90,10 +90,10 @@
             </div>
             </div>
             <div class="list-group">
-                <div v-for="gitlabProject in projectList" class="list-group-item list-group-item-action"
-                     :class="gitlabProject.id == currentProject ? 'active': ''">
+                <div v-for="gitlabProject in gitlab.projects" class="list-group-item list-group-item-action"
+                     :class="gitlabProject.id == gitlab.currentProjectId ? 'active': ''">
                     <div class="d-flex w-100 justify-content-between">
-                        <div @click="setProject(gitlabProject.id); renderedIssue=null;"
+                        <div @click="setProject(gitlabProject.id); gitlab.renderedIssue={};"
                              class="selectable">
                             <i class="fa fa-gitlab"></i> {{gitlabProject.name_with_namespace}}
                         </div>
@@ -110,7 +110,7 @@
                                     <span class="sr-only"></span>
                                 </button>
                                 <div class="dropdown-menu dropdown-menu-right">
-                                    <div v-for="workspace in togglData.workspaces">
+                                    <div v-for="workspace in toggl.workspaces">
                                         <div class="dropdown-divider"></div>
                                         <span class="dropdown-item disabled">{{workspace.name}}</span>
                                         <div v-for="togglProject in workspace.projects">
@@ -131,20 +131,20 @@
         </div>
         <div class="col-4 column" :class="filteredIssueList.length  ? '': 'middle'">
 
-            <div class="empty-box-text" v-show="!(filteredIssueList.length) || !currentProject">
-            <div  v-show="!(filteredIssueList.length) && !currentProject">
+            <div class="empty-box-text" v-show="!(filteredIssueList.length) || !gitlab.currentProjectId">
+            <div  v-show="!(filteredIssueList.length) && !gitlab.currentProjectId">
                 Как только Вы выберете проект, здесь будет отображаться список задач
             </div>
-            <div  v-show="currentProject">
+            <div  v-show="gitlab.currentProjectId">
                 В выбранном проекте пока нет ни одной задачи
             </div>
             </div>
             <div v-show="filteredIssueList.length">
                 <div class="control">
                     <h2>Список задач
-                        <a href="#" v-show="currentProject" @click="loadIssueList(); renderedIssue={};" title="Обновить"><i class="fa fa-refresh"></i></a>
+                        <a href="#" v-show="gitlab.currentProjectId" @click="loadIssueList(); gitlab.renderedIssue={};" title="Обновить"><i class="fa fa-refresh"></i></a>
                     </h2>
-                    <div v-show="currentProject">
+                    <div v-show="gitlab.currentProjectId">
                     <div class="form-group">
                         <label class="custom-control custom-checkbox">
                             <input type="checkbox" class="custom-control-input" v-model="assigned">
@@ -171,7 +171,7 @@
                                     </button>
                                     <button class="btn btn-success"
                                             @click="stopTimer(issue.id)"
-                                            :class="!!currentIssue && isActiveIssue(issue.id) ? '' : 'hidden-xs-up'">Остановить
+                                            :class="!!gitlab.currentIssue && isActiveIssue(issue.id) ? '' : 'hidden-xs-up'">Остановить
                                         таймер
                                         <small v-if="isActiveIssue(issue.id)">{{timerActiveString}}</small>
                                         <div class="loader small" v-show="showTimerPreloader && isActiveIssue(issue.id)"></div>
@@ -183,29 +183,29 @@
                 </div>
             </div>
         </div>
-        <div class="col-4 column" :class="renderedIssue ? '': 'middle'">
-        <div class="empty-box-text" v-show="!renderedIssue">
+        <div class="col-4 column" :class="gitlab.renderedIssue.hasOwnProperty('id') ? '': 'middle'">
+        <div class="empty-box-text" v-show="!gitlab.renderedIssue.hasOwnProperty('id')">
             Как только Вы выберете задачу, здесь будет отображаться её описание
         </div>
-        <div v-if="renderedIssue">
+        <div v-if="gitlab.renderedIssue.hasOwnProperty('id')">
             <div class="control">
                 <button class="btn btn-outline-primary"
-                        @click="startTimer(renderedIssue.id)"
-                        :class="isActiveIssue(renderedIssue.id) ? 'hidden-xs-up' : ''">Запустить таймер
+                        @click="startTimer(gitlab.renderedIssue.id)"
+                        :class="isActiveIssue(gitlab.renderedIssue.id) ? 'hidden-xs-up' : ''">Запустить таймер
                 </button>
                 <button class="btn btn-success"
-                        @click="stopTimer(renderedIssue.id)"
-                        :class="!!currentIssue && isActiveIssue(renderedIssue.id) ? '' : 'hidden-xs-up'">Остановить
+                        @click="stopTimer(gitlab.renderedIssue.id)"
+                        :class="!!gitlab.currentIssue && isActiveIssue(gitlab.renderedIssue.id) ? '' : 'hidden-xs-up'">Остановить
                     таймер
-                    <small v-if="isActiveIssue(renderedIssue.id)">{{timerActiveString}}</small>
+                    <small v-if="isActiveIssue(gitlab.renderedIssue.id)">{{timerActiveString}}</small>
                 </button>
             </div>
 
             <h3>
-                {{renderedIssue.title}}
-                <a :href="renderedIssue.web_url" target="_blank"><span class="fa fa-gitlab"></span> </a>
+                {{gitlab.renderedIssue.title}}
+                <a :href="gitlab.renderedIssue.web_url" target="_blank"><span class="fa fa-gitlab"></span> </a>
             </h3>
-            <div><vue-markdown :source="renderedIssue.description"></vue-markdown></div>
+            <div><vue-markdown :source="replaceImages(gitlab.renderedIssue.description)"></vue-markdown></div>
         </div>
     </div>
     </div>

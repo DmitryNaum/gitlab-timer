@@ -11,114 +11,114 @@ window.Tether = Tether;
 require("bootstrap");
 Vue.use(VueResource);
 
-var gitlabTimer = new Vue({
+let gitlabTimer = new Vue({
     components: {
         VueMarkdown
     },
     el: "#gitlabTimer",
     data: {
-        gitlabUser: null,
-        config: {
-            gitlab: {
-                host: null,
-                privateKey: null,
+        // Все что в том или ином виде сохраняется
+        storedData: {
+            config: {
+                gitlab: {
+                    host: null,
+                    privateKey: null,
+                },
+                toggl: {
+                    apiKey: null
+                }
             },
-            toggl: {
-                apiKey: null
-            }
+            projectBindings: {
+                gitlabToToggl: [] //{toggl:projectId, gitlab:projectId}
+            },
         },
-        projectBindings: {
-            gitlabToToggl: []//{toggl:projectId, gitlab:projectId}
+        gitlab: {
+            api: null,
+            currentUser: null,
+            projects: [],
+            issues: [],
+            currentIssue: null,
+            currentProjectId: null,
+            renderedIssue:{},
         },
+        projectListType: 'all',
         assigned: true,
-        isGitlabSupportedTimetracking: false,
         showTimeTrackingNotice: false,
-        showAuthDialog: false,
-        projectList: [],
-        issueList: [],
-        currentProject: null,
-        showProjectList: false,
-        showIssueList: false,
-        currentIssue: null,
         showPreloader: false,
         timer: null,
         timerActiveString: null,
         timerUpdateInterval: null,
         showTimerPreloader: false,
-        gitlab: null,
-        toggl: null,
-        errorText: null,
-        togglData: {
+        toggl: {
+            api: null,
             workspaces: [],
             activeTimeEntityId: null
         },
-        projectListType: 'all',
-        renderedIssue:null
+
+        isGitlabSupportedTimetracking: false,
+        errorText: null
 
     },
     methods: {
+        replaceImages (description) {
+            let currentProject = this.gitlab.projects.filter((project) => this.gitlab.currentProjectId === project.id).shift();
+            return description.replace(/\[image\]\(\/uploads/g, '[image](' + currentProject.web_url + '/uploads');
+        },
         getUrl: function (path) {
-            return this.config.gitlab.host + path;
+            return this.storedData.config.gitlab.host + path;
         },
         loadProjectList: function () {
             this.showPreloader = true;
 
-            var projectLoader = null;
+            let projectLoader = null;
             switch (this.projectListType) {
                 case 'all':
-                    projectLoader = this.gitlab.getProjects;
+                    projectLoader = this.gitlab.api.getProjects;
                     break;
                 case 'starred':
-                    projectLoader = this.gitlab.getStarredProjects;
+                    projectLoader = this.gitlab.api.getStarredProjects;
                     break;
             }
             projectLoader().then(function (response) {
-                gitlabTimer.projectList = response.body;
+                gitlabTimer.gitlab.projects = response.body;
                 gitlabTimer.showPreloader = false;
-                gitlabTimer.showIssueList = false;
-                gitlabTimer.showProjectList = true;
             })
         },
         formatDate: function (dateString) {
-            var date = new Date(dateString);
+            let date = new Date(dateString);
             return date.toLocaleString();
         },
         setProject: function (id) {
-            this.currentProject = id;
-            this.showProjectList = false;
+            this.gitlab.currentProjectId = id;
             this.loadIssueList();
         },
         loadIssueList: function () {
-            var self = this;
+            let self = this;
             self.showPreloader = true;
 
-            this.gitlab.getOpenedIssues(this.currentProject).then(function (response) {
-                var issues = response.body;
-
-                self.issueList = issues;
+            this.gitlab.api.getOpenedIssues(this.gitlab.currentProjectId).then(function (response) {
+                self.gitlab.issues = response.body;
                 self.showPreloader = false;
-                self.showIssueList = true
             });
         },
         startTimer: function (issueId) {
-            var self = this;
-            if (this.currentIssue) {
+            let self = this;
+            if (this.gitlab.currentIssue) {
                 this.stopTimer();
             }
-            this.currentIssue = issueId;
+            this.gitlab.currentIssue = issueId;
             this.timer = new timer();
 
-            $(window).on('beforeunload', function (e) {
+            $(window).on('beforeunload', function () {
                 return null;
             }, false);
 
             this.timerUpdateInterval = setInterval(function () {
-                var formatted = gitlabTimer.timer.getFormattedTimeInSeconds();
-                gitlabTimer.timerActiveString = formatted;
+                gitlabTimer.timerActiveString = gitlabTimer.timer.getFormattedTimeInSeconds();
             }, 1000);
 
-            var issue;
-            this.issueList.forEach(function (iss) {
+            let issue = {};
+            this.gitlab.issues.forEach(function (iss) {
                 if (iss.id == issueId) {
                     issue = iss;
                 }
@@ -126,20 +126,20 @@ var gitlabTimer = new Vue({
             if (!issue) {
                 return;
             }
-            var togglProjectId = this.getTogglProjectIdByGitlabprojectId(issue.project_id);
+            let togglProjectId = this.getTogglProjectIdByGitlabprojectId(issue.project_id);
 
             if (togglProjectId) {
-                var timeEntityname = "#" + issue.iid + " " + issue.title
-                this.toggl.createTimeEntity(timeEntityname, -1, this.timer.getStartTime(), togglProjectId, 'gitlab-timer').then(function (response) {
-                    var timeEntity = response.body.data
-                    self.togglData.activeTimeEntityId = timeEntity.id;
+                let timeEntityname = "#" + issue.iid + " " + issue.title;
+                this.toggl.api.createTimeEntity(timeEntityname, -1, this.timer.getStartTime(), togglProjectId, 'gitlab-timer').then(function (response) {
+                    let timeEntity = response.body.data;
+                    self.toggl.activeTimeEntityId = timeEntity.id;
                 })
             }
         },
         stopTimer: function () {
-            var self = this;
-            var issue = self.currentIssue;
-            self.currentIssue = null;
+            let self = this;
+            let issue = self.gitlab.currentIssue;
+            self.gitlab.currentIssue = null;
             self.timerActiveString = null;
 
             self.timer.stop();
@@ -149,52 +149,53 @@ var gitlabTimer = new Vue({
 
             $(window).off('beforeunload');
 
-            var spentTime = Math.floor(self.timer.getTimeInSeconds());
-            var spentTimeInMinutes = spentTime / 60;
+            let spentTime = Math.floor(self.timer.getTimeInSeconds());
+            let spentTimeInMinutes = spentTime / 60;
             if (spentTime) {
                 self.showTimerPreloader = true;
-                self.gitlab.spentTime(self.currentProject, issue, spentTimeInMinutes.toString() + "m").then(function () {
+                self.gitlab.api.spentTime(self.gitlab.currentProjectId, issue, spentTimeInMinutes.toString() + "m").then(function () {
                     self.showTimerPreloader = false;
                 });
 
-                if (self.togglData.activeTimeEntityId) {
-                    self.toggl.stopTimeEntity(self.togglData.activeTimeEntityId);
-                    self.togglData.activeTimeEntityId = null;
+                if (self.toggl.activeTimeEntityId) {
+                    self.toggl.api.stopTimeEntity(self.toggl.activeTimeEntityId);
+                    self.toggl.activeTimeEntityId = null;
                 }
             }
         },
         isActiveIssue: function (issueId) {
-            return this.currentIssue == issueId;
+            return this.gitlab.currentIssue == issueId;
         },
         applyConfig: function () {
-            if (!this.config.gitlab.host || !this.config.gitlab.privateKey) {
+            let config = this.storedData.config;
+            if (!config.gitlab.host || !config.gitlab.privateKey) {
                 this.errorText = 'Неверные настройки';
                 return;
             }
             // Сохраняем конфиг
-            var serializedConfig = JSON.stringify(gitlabTimer.config);
+            let serializedConfig = JSON.stringify(config);
             localStorage.setItem('config', serializedConfig);
 
             this.initApplication();
         },
         initApplication: function () {
-            var self = this;
+            let self = this;
             // load configs
-            var projectsBindingsData = localStorage.getItem('projectBindings');
-            var projectsBindings = JSON.parse(projectsBindingsData);
+            let projectsBindingsData = localStorage.getItem('projectBindings');
+            let projectsBindings = JSON.parse(projectsBindingsData);
             if (projectsBindings) {
-                self.projectBindings = projectsBindings;
+                self.storedData.projectBindings = projectsBindings;
             }
 
-            var configData = localStorage.getItem('config');
-            var config = JSON.parse(configData);
+            let configData = localStorage.getItem('config');
+            let config = JSON.parse(configData);
 
-            var configIsValid = !!config && !!config.gitlab.host && !!config.gitlab.privateKey && !!config.toggl && !!config.toggl.apiKey;
+            let configIsValid = !!config && !!config.gitlab.host && !!config.gitlab.privateKey && !!config.toggl && !!config.toggl.apiKey;
 
             if (configIsValid) {
-                this.config = config;
-                this.gitlab = new gitlabApi(this.config.gitlab.host, this.config.gitlab.privateKey);
-                this.toggl = new togglApi(config.toggl.apiKey);
+                this.storedData.config = config;
+                this.gitlab.api = new gitlabApi(config.gitlab.host, config.gitlab.privateKey);
+                this.toggl.api = new togglApi(config.toggl.apiKey);
                 this.testConfig().then(function (data) {
                     self.showPreloader = false;
 
@@ -208,7 +209,7 @@ var gitlabTimer = new Vue({
                     }
                     self.errorText = null;
 
-                    self.gitlab.getUser().then((response) => self.gitlabUser = response.body);
+                    self.gitlab.api.getUser().then((response) => self.gitlab.currentUser = response.body);
 
                     self.loadProjectList();
                     self.loadTogglWorkspacesAndProjects();
@@ -216,32 +217,28 @@ var gitlabTimer = new Vue({
                     if (data.status === 401) {
                         self.errorText = "Неверный Gitlab PrivateKey. Введите новый в настройках";
                     } else {
-                        self.errorText = "Произошла ошибка при попытке подключения к серверу " + self.config.gitlab.host;
+                        self.errorText = "Произошла ошибка при попытке подключения к серверу " + self.storedData.config.gitlab.host;
                     }
                 });
             } else {
-                var $modal = $(self.$el).find('#settingsDialog');
+                let $modal = $(self.$el).find('#settingsDialog');
                 if (!$modal.is('.show')) {
                     $modal.modal('show');
                 }
             }
         },
         testConfig: function () {
-            var self = this;
-            var promise = new Promise(function (resolve, reject) {
-                var result = {
+            let self = this;
+            return new Promise(function (resolve, reject) {
+                let result = {
                     privateKeyValid: undefined,
                     gitlabVersionSupported: undefined,
                 };
-                self.gitlab.getVersion().then(function (response) {
+                self.gitlab.api.getVersion().then(function (response) {
                     // Проверяем авторизацию
-                    var body = response.body;
-                    var version = body.version;
-                    if (version) {
-                        result.privateKeyValid = true;
-                    } else {
-                        result.privateKeyValid = false;
-                    }
+                    let body = response.body;
+                    let version = body.version;
+                    result.privateKeyValid = !!version;
 
                     // проверяем версию gitlab
                     result.gitlabVersionSupported = version.split('-')[0] >= '8.16.1';
@@ -250,14 +247,11 @@ var gitlabTimer = new Vue({
                     reject(d);
                 });
             });
-
-            return promise;
-
         },
         getTogglProjectIdByGitlabprojectId: function (gitlabProjectId) {
-            var togglprojectId = undefined;
+            let togglprojectId = undefined;
 
-            this.projectBindings.gitlabToToggl.forEach(function (el) {
+            this.storedData.projectBindings.gitlabToToggl.forEach(function (el) {
                 if (el.gitlab == gitlabProjectId) {
                     togglprojectId = el.toggl;
                 }
@@ -266,9 +260,9 @@ var gitlabTimer = new Vue({
             return togglprojectId;
         },
         getTogglProject: function (id) {
-            var self = this;
-            var togglProject = undefined;
-            self.togglData.workspaces.forEach(function (workspace) {
+            let self = this;
+            let togglProject = undefined;
+            self.toggl.workspaces.forEach(function (workspace) {
                 if (togglProject) {
                     return;
                 }
@@ -281,8 +275,8 @@ var gitlabTimer = new Vue({
             return togglProject;
         },
         bindTogglToGitlab: function (togglProjectId, gitlabProjectId) {
-            var replaced;
-            this.projectBindings.gitlabToToggl.forEach(function (el) {
+            let replaced;
+            this.storedData.projectBindings.gitlabToToggl.forEach(function (el) {
                 if (el.gitlab == gitlabProjectId) {
                     el.gitlab = gitlabProjectId;
                     el.toggl = togglProjectId;
@@ -292,27 +286,27 @@ var gitlabTimer = new Vue({
                 }
             });
             if (!replaced) {
-                this.projectBindings.gitlabToToggl.push({gitlab: gitlabProjectId, toggl: togglProjectId});
+                this.storedData.projectBindings.gitlabToToggl.push({gitlab: gitlabProjectId, toggl: togglProjectId});
             }
 
-            var json = JSON.stringify(this.projectBindings);
+            let json = JSON.stringify(this.storedData.projectBindings);
             localStorage.setItem('projectBindings', json);
         },
         loadTogglWorkspacesAndProjects: function () {
-            var self = this;
-            self.toggl.getWorkspaces().then(function (response) {
-                var data = response.body;
+            let self = this;
+            self.toggl.api.getWorkspaces().then(function (response) {
+                let data = response.body;
                 data.forEach(function (el) {
-                    var workspace = el;
+                    let workspace = el;
                     workspace.projects = [];
-                    self.togglData.workspaces.push(workspace);
-                    self.toggl.getWorkspaceProjects(workspace.id).then(function (response) {
-                        var projects = response.body;
+                    self.toggl.workspaces.push(workspace);
+                    self.toggl.api.getWorkspaceProjects(workspace.id).then(function (response) {
+                        let projects = response.body;
                         if (!projects) {
                             return;
                         }
-                        var wid = projects[0].wid;
-                        self.togglData.workspaces.forEach(function (workspace) {
+                        let wid = projects[0].wid;
+                        self.toggl.workspaces.forEach(function (workspace) {
                             if (workspace.id == wid) {
                                 workspace.projects = projects;
                             }
@@ -322,10 +316,10 @@ var gitlabTimer = new Vue({
             })
         },
         renderIssue:function (issueId) {
-            var self = this;
-            this.issueList.forEach(function(issue){
+            let self = this;
+            this.gitlab.issues.forEach(function(issue){
                 if (issue.id == issueId) {
-                    self.renderedIssue = issue;
+                    self.gitlab.renderedIssue = issue;
                 }
             })
         }
@@ -333,22 +327,23 @@ var gitlabTimer = new Vue({
     computed: {
         filteredIssueList () {
             if (this.assigned) {
-                return this.issueList.filter((issue) => issue.assignee && issue.assignee.id === this.gitlabUser.id);
+                return this.gitlab.issues.filter((issue) => issue.assignee && issue.assignee.id === this.gitlab.currentUser.id);
             }
 
-            return this.issueList || [];
+            return this.gitlab.issues || [];
         },
         getPrivateKeyUrl () {
             return this.getUrl('/profile/account');
         }
     },
     mounted: function () {
-        this.$watch('timerActiveString', function (newVal, oldVal) {
-            var baseTitle = $('title').data('title');
+        this.$watch('timerActiveString', function (newVal) {
+            let $title = $('title');
+            let baseTitle = $title.data('title');
             if (newVal) {
-                $('title').text(newVal + ' | ' + baseTitle);
+                $title.text(newVal + ' | ' + baseTitle);
             } else {
-                $('title').text(baseTitle);
+                $title.text(baseTitle);
             }
         });
 
